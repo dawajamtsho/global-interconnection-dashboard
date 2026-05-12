@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='site.js') }}" defer></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hero hero--compact">
+        <div class="hero-logos">
+          <img class="hero-logo hero-logo--primary" src="{{ url_for('static', filename='logo.png') }}" alt="ISA-IITD Global Electricity Interconnection logo">
+          <div class="hero-logo-stack">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-1.svg') }}" alt="Secondary logo 1">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-2.svg') }}" alt="Secondary logo 2">
+          </div>
+        </div>
+        <div class="hero-copy">
+          <h1>GLOBAL CROSS-BORDER ELECTRICITY INTERCONNECTIONS DASHBOARD</h1>
+          <p class="hero-subtitle">IIT Delhi - ISA Collaborative Project</p>
+        </div>
+      </section>
+
+      <nav class="top-nav">
+        <a class="active" href="{{ url_for('dashboard_infrastructure') }}"><span>Home</span></a>
+        <a href="{{ url_for('about') }}"><span>About</span></a>
+        <a href="{{ url_for('dashboard_market') }}"><span>Market</span></a>
+        <a href="{{ url_for('policies') }}"><span>Policies</span></a>
+        <a href="{{ url_for('analytics') }}"><span>Analytics</span></a>
+        <a href="{{ url_for('newsletter') }}"><span>Newsletter</span></a>
+      </nav>
+
+      <section class="panel newsletter">
+        <div class="newsletter-header">
+          <div><h2>Infrastructure Explorer</h2></div>
+        </div>
+        <div class="infra-mode-bar">
+          <a
+            class="mode-pill{% if selected_map_mode == 'separate' %} active{% endif %}"
+            href="{{ url_for('dashboard_infrastructure', country=selected_country, status=selected_status, power_pool=selected_power_pool, query=selected_query, map_mode='separate') }}"
+          >
+            All interconnections
+          </a>
+          <a
+            class="mode-pill{% if selected_map_mode == 'consolidated' %} active{% endif %}"
+            href="{{ url_for('dashboard_infrastructure', country=selected_country, status=selected_status, power_pool=selected_power_pool, query=selected_query, map_mode='consolidated') }}"
+          >
+            Consolidated corridors
+          </a>
+        </div>
+        <div id="infra-map" class="chart-surface chart-map"></div>
+        <div class="live-flow-strip">
+          <div>
+            <p class="filter-kicker">ENTSO-E corridor data</p>
+            <p>
+              {% if dashboard['live_flow_total'] %}
+                {{ dashboard['live_flow_count'] }} of {{ dashboard['live_flow_total'] }} supported European corridors have recent cross-border flow data in this view.
+              {% else %}
+                No ENTSO-E-supported country pairs are visible in this view, or ENTSOE_TOKEN is not configured.
+              {% endif %}
+            </p>
+          </div>
+          <a class="action-button secondary" href="https://transparency.entsoe.eu/" target="_blank" rel="noreferrer">Open ENTSO-E</a>
+        </div>
+        <div class="map-legend">
+          <div class="legend-item">
+            <span class="legend-icon legend-line legend-operational"></span>
+            Operational
+          </div>
+          <div class="legend-item">
+            <span class="legend-icon legend-line legend-planned"></span>
+            Planned
+          </div>
+          <div class="legend-item">
+            <span class="legend-icon legend-line legend-uc"></span>
+            Under Construction
+          </div>
+          <div class="legend-item">
+            <span class="legend-icon legend-line legend-decommissioned"></span>
+            Decommissioned
+          </div>
+        </div>
+      </section>
+
+      <section class="kpi-grid">
+        <article class="panel kpi-panel"><p class="kpi-label">Interconnections</p><p class="kpi-value">{{ dashboard['kpis']['interconnections'] }}</p></article>
+        <article class="panel kpi-panel"><p class="kpi-label">Countries</p><p class="kpi-value">{{ dashboard['kpis']['countries'] }}</p></article>
+        <article class="panel kpi-panel"><p class="kpi-label">Known Capacity</p><p class="kpi-value">{{ "{:,.0f}".format(dashboard['kpis']['capacity_mw']) }} MW</p></article>
+        <article class="panel kpi-panel"><p class="kpi-label">Operational Share</p><p class="kpi-value">{{ dashboard['kpis']['operational_share'] }}%</p></article>
+      </section>
+
+      <section class="dashboard-grid">
+        <section class="panel newsletter">
+          <div class="newsletter-header"><div><h2>Top Countries</h2></div></div>
+          <div id="infra-country-chart" class="chart-surface"></div>
+        </section>
+        <section class="panel newsletter">
+          <div class="newsletter-header"><div><h2>Capacity by Status</h2></div></div>
+          <div id="infra-status-chart" class="chart-surface"></div>
+        </section>
+      </section>
+
+      <section class="panel newsletter">
+        <div class="newsletter-header"><div><h2>Filtered Assets</h2></div></div>
+        <div class="table-wrap table-wrap--scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Countries</th>
+                <th>Status</th>
+                <th>Pool</th>
+                <th>Voltage</th>
+                <th>Capacity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in dashboard['rows'][:80] %}
+                <tr>
+                  <td>{{ row['name'] }}</td>
+                  <td>{{ row['country_a_name'] }} ↔ {{ row['country_b_name'] }}</td>
+                  <td>{{ row['status'] }}</td>
+                  <td>{{ row['power_pool'] }}</td>
+                  <td>{{ row['voltage_kv'] or '—' }} kV</td>
+                  <td>{{ row['capacity_mw'] or '—' }} MW</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="site-footer panel">
+        <section class="footer-grid">
+          <div class="footer-block">
+            <p class="footer-title">Project</p>
+            <p>Global Cross-Border Electricity Interconnections Dashboard</p>
+            <p>IIT Delhi - ISA Collaborative Project</p>
+            <p>DESE, IIT Delhi</p>
+            <p>New Delhi</p>
+            <p><a href="mailto:interconnection@gmail.com">interconnection@gmail.com</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Quick Links</p>
+            <p><a href="https://home.iitd.ac.in/" target="_blank" rel="noreferrer">IIT Delhi</a></p>
+            <p><a href="https://isolaralliance.org/" target="_blank" rel="noreferrer">International Solar Alliance</a></p>
+            <p><a href="https://www.iea.org/" target="_blank" rel="noreferrer">International Energy Agency</a></p>
+            <p><a href="https://www.bimstec.org/" target="_blank" rel="noreferrer">Bimstec Energy Center</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Site Pages</p>
+            <p><a href="{{ url_for('dashboard_infrastructure') }}">Home</a></p>
+            <p><a href="{{ url_for('about') }}">About</a></p>
+            <p><a href="{{ url_for('dashboard_market') }}">Market</a></p>
+            <p><a href="{{ url_for('policies') }}">Policies</a></p>
+            <p><a href="{{ url_for('analytics') }}">Analytics</a></p>
+            <p><a href="{{ url_for('newsletter') }}">Newsletter</a></p>
+          </div>
+        </section>
+        <p class="footer-copyright">© Global Cross-Border Electricity Interconnections Dashboard 2026</p>
+      </footer>
+    </div>
+
+    <script>
+      const lineFeatures = {{ dashboard['line_features']|tojson }};
+      const markers = {{ dashboard['markers']|tojson }};
+      const countryCounts = {{ dashboard['country_counts']|tojson }};
+      const capacityByStatus = {{ dashboard['capacity_by_status']|tojson }};
+
+      const statusColors = {
+        Operational: "#dc2626",
+        Planned: "#f59e0b",
+        "Under Construction": "#2563eb",
+        Maintenance: "#dc2626",
+        Decommissioned: "#6b7280"
+      };
+
+      function formatLiveFlow(flow) {
+        if (!flow) {
+          return "Power flow: not available for this corridor";
+        }
+        if (flow.status !== "ok") {
+          return `Power flow: ${flow.error || "not available"}`;
+        }
+        const value = Number(flow.latest_value || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+        const energyMwh = Number(flow.energy_value || 0);
+        const energy = energyMwh >= 1
+          ? `${energyMwh.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${flow.energy_unit || "MWh"}`
+          : `${(energyMwh * 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} kWh`;
+        return `Power flow: ${value} ${flow.latest_unit} ${flow.from} → ${flow.to}<br>Energy interchanged: ${energy} ${flow.energy_from || flow.from} → ${flow.energy_to || flow.to}<br>${flow.window} · ${flow.latest_period}`;
+      }
+
+      function formatCapacity(value) {
+        const capacity = Number(value || 0);
+        return capacity > 0
+          ? `${capacity.toLocaleString(undefined, { maximumFractionDigits: 0 })} MW`
+          : "Not available";
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function buildLiveFlowCard(flow) {
+        if (!flow) {
+          return `
+            <div class="map-popup-live map-popup-live--muted">
+              <span class="map-popup-label">Live Electricity Exchange</span>
+              <strong>Not available for this corridor</strong>
+            </div>
+          `;
+        }
+        if (flow.status !== "ok") {
+          return `
+            <div class="map-popup-live map-popup-live--muted">
+              <span class="map-popup-label">Live Electricity Exchange</span>
+              <strong>Unavailable</strong>
+              <p>${escapeHtml(flow.error || "No recent cross-border flow data returned.")}</p>
+            </div>
+          `;
+        }
+        const power = Number(flow.latest_value || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+        const energyMwh = Number(flow.energy_value || 0);
+        const energy = energyMwh >= 1
+          ? `${energyMwh.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${flow.energy_unit || "MWh"}`
+          : `${(energyMwh * 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} kWh`;
+        return `
+          <div class="map-popup-live">
+            <div class="map-popup-live-head">
+              <span class="map-popup-label">Live Electricity Exchange</span>
+              <span class="map-popup-source">${escapeHtml(flow.window || "Latest window")}</span>
+            </div>
+            <div class="map-popup-metrics">
+              <div>
+                <span>Power</span>
+                <strong>${power} ${escapeHtml(flow.latest_unit || "MW")}</strong>
+                <small>${escapeHtml(flow.from)} → ${escapeHtml(flow.to)}</small>
+              </div>
+              <div>
+                <span>Energy</span>
+                <strong>${energy}</strong>
+                <small>${escapeHtml(flow.energy_from || flow.from)} → ${escapeHtml(flow.energy_to || flow.to)}</small>
+              </div>
+            </div>
+            <p>${escapeHtml(flow.latest_period || "")}</p>
+          </div>
+        `;
+      }
+
+      function buildMapInfoContent(item) {
+        const statusClass = `status-${String(item.status || "unknown").toLowerCase().replaceAll(" ", "-")}`;
+        return `
+          <article class="map-popup-card">
+            <div class="map-popup-topline">
+              <span class="map-popup-status ${statusClass}">${escapeHtml(item.status)}</span>
+              <span class="map-popup-route">${escapeHtml(item.from)} → ${escapeHtml(item.to)}</span>
+            </div>
+            <h3>${escapeHtml(item.label)}</h3>
+            <div class="map-popup-stat-grid">
+              <div>
+                <span>Capacity</span>
+                <strong>${formatCapacity(item.capacity_mw)}</strong>
+              </div>
+              <div>
+                <span>Route</span>
+                <strong>${Number(item.route_index || 0) + 1} / ${Number(item.route_total || 1)}</strong>
+              </div>
+            </div>
+            ${buildLiveFlowCard(item.live_flow)}
+          </article>
+        `;
+      }
+
+      function buildOffsetArc(item) {
+        const startLon = item.lon[0];
+        const endLon = item.lon[1];
+        const startLat = item.lat[0];
+        const endLat = item.lat[1];
+
+        const dx = endLon - startLon;
+        const dy = endLat - startLat;
+        const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+        const nx = -dy / distance;
+        const ny = dx / distance;
+
+        const middle = (item.route_total - 1) / 2;
+        const offsetIndex = item.route_index - middle;
+        const amplitude = Math.min(10, Math.max(1.6, distance * 0.12));
+        const offset = item.route_total > 1 ? offsetIndex * amplitude : amplitude * 0.75;
+
+        const controlLon = (startLon + endLon) / 2 + nx * offset;
+        const controlLat = (startLat + endLat) / 2 + ny * offset;
+        const steps = 36;
+        const arcLon = [];
+        const arcLat = [];
+
+        for (let i = 0; i <= steps; i += 1) {
+          const t = i / steps;
+          const oneMinus = 1 - t;
+          arcLon.push(
+            oneMinus * oneMinus * startLon +
+            2 * oneMinus * t * controlLon +
+            t * t * endLon
+          );
+          arcLat.push(
+            oneMinus * oneMinus * startLat +
+            2 * oneMinus * t * controlLat +
+            t * t * endLat
+          );
+        }
+
+        return { arcLon, arcLat };
+      }
+
+      const lineTraces = [];
+      for (const item of lineFeatures) {
+        let arcLon = item.lon;
+        let arcLat = item.lat;
+        if (item.lon.length <= 2 && item.curve_hint) {
+          const curved = buildOffsetArc(item);
+          arcLon = curved.arcLon;
+          arcLat = curved.arcLat;
+        }
+        lineTraces.push({
+          type: "scattergeo",
+          mode: "lines",
+          name: item.status,
+          lon: arcLon,
+          lat: arcLat,
+          text: Array(arcLon.length).fill(
+            `${item.label}<br>${item.from} ↔ ${item.to}<br>Capacity: ${item.capacity_mw || "—"} MW<br>${formatLiveFlow(item.live_flow)}<br>Parallel route ${item.route_index + 1} of ${item.route_total}`
+          ),
+          hoverinfo: "text",
+          showlegend: false,
+          line: { width: 1.7, color: statusColors[item.status] || "#64748b" }
+        });
+      }
+
+      for (const [status, color] of Object.entries(statusColors)) {
+        if (!lineFeatures.some(item => item.status === status)) {
+          continue;
+        }
+        lineTraces.push({
+          type: "scattergeo",
+          mode: "lines",
+          name: status,
+          lon: [null],
+          lat: [null],
+          hoverinfo: "skip",
+          line: { width: 2.5, color }
+        });
+      }
+
+      lineTraces.push({
+        type: "scattergeo",
+        mode: "markers",
+        name: "Countries",
+        lon: markers.map(item => item.lon),
+        lat: markers.map(item => item.lat),
+        text: markers.map(item => `${item.country} (${item.code})<br>${item.count} linked assets`),
+        hoverinfo: "text",
+        marker: {
+          size: markers.map(item => Math.max(8, Math.min(24, item.count + 4))),
+          color: "#164e63",
+          opacity: 0.82
+        }
+      });
+
+      function initMap() {
+        const mapEl = document.getElementById("infra-map");
+        const map = new google.maps.Map(mapEl, {
+          zoom: 2,
+          center: { lat: 20, lng: 0 },
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: false,
+        });
+
+        const bounds = new google.maps.LatLngBounds();
+        const infoWindow = new google.maps.InfoWindow();
+
+        for (const item of lineFeatures) {
+          const path = item.lon.map((lon, index) => ({ lat: item.lat[index], lng: lon }));
+
+          const line = new google.maps.Polyline({
+            path,
+            geodesic: true,
+            strokeColor: statusColors[item.status] || "#ff0000",
+            strokeOpacity: 0.9,
+            strokeWeight: 3,
+            map,
+          });
+
+          line.addListener("click", (event) => {
+            infoWindow.setContent(buildMapInfoContent(item));
+            infoWindow.setPosition(event.latLng);
+            infoWindow.open(map);
+          });
+
+          for (const point of path) {
+            bounds.extend(point);
+          }
+        }
+
+        for (const point of markers) {
+          bounds.extend({ lat: point.lat, lng: point.lon });
+        }
+
+        if (!bounds.isEmpty()) {
+          const fitPadding = mapEl.offsetWidth < 700 ? 18 : 28;
+          map.fitBounds(bounds, fitPadding);
+          google.maps.event.addListenerOnce(map, "idle", () => {
+            if (map.getZoom() < 2) {
+              map.setZoom(2);
+            }
+          });
+        }
+      }
+
+      window.initMap = initMap;
+
+      Plotly.newPlot("infra-country-chart", [{
+        type: "bar",
+        x: countryCounts.map(item => item.country),
+        y: countryCounts.map(item => item.count),
+        marker: { color: "#0f766e" }
+      }], {
+        margin: { l: 40, r: 10, t: 10, b: 80 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        xaxis: { tickangle: -35 },
+        yaxis: { title: "Assets" }
+      }, { responsive: true, displayModeBar: false });
+
+      Plotly.newPlot("infra-status-chart", [{
+        type: "bar",
+        x: capacityByStatus.map(item => item.status),
+        y: capacityByStatus.map(item => item.capacity_mw),
+        marker: { color: capacityByStatus.map(item => statusColors[item.status] || "#64748b") }
+      }], {
+        margin: { l: 50, r: 10, t: 10, b: 60 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        yaxis: { title: "Known capacity (MW)" }
+      }, { responsive: true, displayModeBar: false });
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initMap"></script>
+  </body>
+</html>

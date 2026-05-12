@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Policies</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='site.js') }}" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hero">
+        <div class="hero-logos">
+          <img class="hero-logo hero-logo--primary" src="{{ url_for('static', filename='logo.png') }}" alt="ISA-IITD Global Electricity Interconnection logo">
+          <div class="hero-logo-stack">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-1.svg') }}" alt="Secondary logo 1">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-2.svg') }}" alt="Secondary logo 2">
+          </div>
+        </div>
+        <div class="hero-copy">
+          <h1>GLOBAL CROSS-BORDER ELECTRICITY INTERCONNECTIONS DASHBOARD</h1>
+          <p class="hero-subtitle">IIT Delhi - ISA Collaborative Project</p>
+        </div>
+      </section>
+
+      <nav class="top-nav">
+        <a href="{{ url_for('dashboard_infrastructure') }}"><span>Home</span></a>
+        <a href="{{ url_for('about') }}"><span>About</span></a>
+        <a href="{{ url_for('dashboard_market') }}"><span>Market</span></a>
+        <a class="active" href="{{ url_for('policies') }}"><span>Policies</span></a>
+        <a href="{{ url_for('analytics') }}"><span>Analytics</span></a>
+        <a href="{{ url_for('newsletter') }}"><span>Newsletter</span></a>
+      </nav>
+
+      <section class="panel filter-panel">
+        <form class="filter-form filter-form--policies" method="get">
+          <div>
+            <label for="policy-country">Country</label>
+            <select id="policy-country" name="country">
+              <option value="">All countries</option>
+              {% for country in policies['countries'] %}
+                <option value="{{ country }}" {% if policies['selected_country'] == country %}selected{% endif %}>{{ country }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="policy-topic">Topic</label>
+            <select id="policy-topic" name="topic">
+              <option value="">All topics</option>
+              {% for topic in policies['topics'] %}
+                <option value="{{ topic }}" {% if policies['selected_topic'] == topic %}selected{% endif %}>{{ topic }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="policy-status">Status</label>
+            <select id="policy-status" name="status">
+              <option value="">All statuses</option>
+              {% for status in policies['statuses'] %}
+                <option value="{{ status }}" {% if policies['selected_status'] == status %}selected{% endif %}>{{ status }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="policy-jurisdiction">Jurisdiction</label>
+            <select id="policy-jurisdiction" name="jurisdiction">
+              <option value="">All jurisdictions</option>
+              {% for jurisdiction in policies['jurisdictions'] %}
+                <option value="{{ jurisdiction }}" {% if policies['selected_jurisdiction'] == jurisdiction %}selected{% endif %}>{{ jurisdiction }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="policy-search">
+            <label for="policy-query">Search</label>
+            <input id="policy-query" type="text" name="query" value="{{ policies['selected_query'] }}" placeholder="Search title or description">
+          </div>
+          <div class="filter-actions">
+            <button type="submit">Apply filters</button>
+          </div>
+          <div class="filter-actions">
+            <a class="action-button secondary" href="{{ url_for('policies') }}">Reset</a>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel newsletter">
+        <div class="newsletter-header">
+          <div>
+            <h2>Policies</h2>
+            {% if policies['count'] %}
+              <p class="policies-count">{{ policies['count'] }} total policies</p>
+            {% endif %}
+          </div>
+          <a class="source-link" href="{{ policies['source_url'] }}" target="_blank" rel="noreferrer">Open API source</a>
+        </div>
+
+        {% if policies['error'] %}
+          <div class="alert">
+            <p>{{ policies['error'] }}</p>
+          </div>
+        {% endif %}
+
+        <section class="topic-block">
+          <div class="table-wrap--scroll">
+            <div class="policy-list">
+            {% for item in policies['items'] %}
+              <article class="policy-list-item">
+                <div class="policy-list-main">
+                  <h3><a href="{{ item['learn_more'] or item['source'] or '#' }}" target="_blank" rel="noreferrer">{{ item['title'] }}</a></h3>
+                  <p>{{ item['country_label'] or 'No country' }} · {{ item['year'] or 'No year' }} · {{ item['status'] or 'No status' }} · {{ item['jurisdiction'] or 'No jurisdiction' }}</p>
+                  {% if item['topic_label'] %}
+                    <p>Topic: {{ item['topic_label'] }}</p>
+                  {% endif %}
+                  {% if item['policy_type_label'] %}
+                    <p>Policy type: {{ item['policy_type_label'] }}</p>
+                  {% endif %}
+                </div>
+                {% if item['learn_more'] or item['source'] %}
+                  <a class="policy-open-link" href="{{ item['learn_more'] or item['source'] }}" target="_blank" rel="noreferrer">Open</a>
+                {% endif %}
+              </article>
+            {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        {% if policies['pages'] %}
+          <div class="pagination">
+            {% for page_number in policies['pages'] %}
+              <a
+                class="page-chip{% if page_number == policies['selected_page'] %} active{% endif %}"
+                href="{{ url_for('policies', country=policies['selected_country'], topic=policies['selected_topic'], status=policies['selected_status'], jurisdiction=policies['selected_jurisdiction'], query=policies['selected_query'], page=page_number) }}"
+              >
+                {{ page_number }}
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </section>
+
+      <footer class="site-footer panel">
+        <section class="footer-grid">
+          <div class="footer-block">
+            <p class="footer-title">Project</p>
+            <p>Global Cross-Border Electricity Interconnections Dashboard</p>
+            <p>IIT Delhi - ISA Collaborative Project</p>
+            <p>DESE, IIT Delhi</p>
+            <p>New Delhi</p>
+            <p><a href="mailto:interconnection@gmail.com">interconnection@gmail.com</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Quick Links</p>
+            <p><a href="https://home.iitd.ac.in/" target="_blank" rel="noreferrer">IIT Delhi</a></p>
+            <p><a href="https://isolaralliance.org/" target="_blank" rel="noreferrer">International Solar Alliance</a></p>
+            <p><a href="https://www.iea.org/" target="_blank" rel="noreferrer">International Energy Agency</a></p>
+            <p><a href="https://www.bimstec.org/" target="_blank" rel="noreferrer">Bimstec Energy Center</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Site Pages</p>
+            <p><a href="{{ url_for('dashboard_infrastructure') }}">Home</a></p>
+            <p><a href="{{ url_for('about') }}">About</a></p>
+            <p><a href="{{ url_for('dashboard_market') }}">Market</a></p>
+            <p><a href="{{ url_for('policies') }}">Policies</a></p>
+            <p><a href="{{ url_for('analytics') }}">Analytics</a></p>
+            <p><a href="{{ url_for('newsletter') }}">Newsletter</a></p>
+          </div>
+        </section>
+        <p class="footer-copyright">© Global Cross-Border Electricity Interconnections Dashboard 2026</p>
+      </footer>
+    </div>
+  </body>
+</html>

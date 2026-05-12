@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>About</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='site.js') }}" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hero hero--compact">
+        <div class="hero-logos">
+          <img class="hero-logo hero-logo--primary" src="{{ url_for('static', filename='logo.png') }}" alt="ISA-IITD Global Electricity Interconnection logo">
+          <div class="hero-logo-stack">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-1.svg') }}" alt="Secondary logo 1">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-2.svg') }}" alt="Secondary logo 2">
+          </div>
+        </div>
+        <div class="hero-copy">
+          <h1>GLOBAL CROSS-BORDER ELECTRICITY INTERCONNECTIONS DASHBOARD</h1>
+          <p class="hero-subtitle">IIT Delhi - ISA Collaborative Project</p>
+        </div>
+      </section>
+
+      <nav class="top-nav">
+        <a href="{{ url_for('dashboard_infrastructure') }}"><span>Home</span></a>
+        <a class="active" href="{{ url_for('about') }}"><span>About</span></a>
+        <a href="{{ url_for('dashboard_market') }}"><span>Market</span></a>
+        <a href="{{ url_for('policies') }}"><span>Policies</span></a>
+        <a href="{{ url_for('analytics') }}"><span>Analytics</span></a>
+        <a href="{{ url_for('newsletter') }}"><span>Newsletter</span></a>
+      </nav>
+
+      <section class="panel report-hero">
+        <div class="newsletter-header">
+          <div>
+            <h2>About The Project</h2>
+            <p class="report-subtitle"><strong>Project background, development context, and purpose</strong></p>
+          </div>
+        </div>
+        <p class="report-intro" style="text-align: justify;">The platform was developed under the collaborative initiative between Indian Institute of Technology Delhi and the International Solar Alliance to create a single, accessible interface for regional interconnection information. It is a cornerstone project executed by two M.Tech students from the Department of Energy Science and Engineering at IIT Delhi, currently pursuing M.Tech in Renewable Energy Technologies and Management under the Solar Fellowship program supported by the International Solar Alliance.</p>
+        <p class="report-intro" style="text-align: justify;">The platform integrates project datasets, policy intelligence, market references, and curated energy news into a unified web-based experience. It is designed to support researchers, planners, analysts, policymakers, and institutions engaged in regional power integration, cross-border electricity cooperation, and energy transition initiatives.</p>
+      </section>
+
+    <section class="dashboard-grid about-grid">
+        <section class="panel newsletter">
+          <div class="newsletter-header">
+            <div><h2>Project Details</h2></div>
+          </div>
+          <div class="about-list">
+            <div><span>Project name</span><strong>Global Cross-Border Electricity Interconnections Dashboard</strong></div>
+            <div><span>Location</span><strong>New Delhi, India</strong></div>
+            <div><span>Institutional base</span><strong>IIT Delhi - ISA Collaborative Project</strong></div>
+            <div><span>Project focus</span><strong>Cross-border electricity infrastructure, markets, policies, and regional knowledge</strong></div>
+          </div>
+        </section>
+
+      <section class="panel newsletter">
+          
+        <div style="font-family: Arial, sans-serif; line-height: 1.8; color: #222; max-width: 800px; margin: auto;">
+
+          <h2 style="text-align: center; margin-bottom: 20px;">
+          Project Executed By
+          </h2>
+
+          <p style="text-align: center;">
+          <strong>Dawa Jamtsho</strong> &amp; <strong>Gobinath Satchithanantham</strong><br>
+          M.Tech in Renewable Energy Technologies and Management<br>
+          Department of Energy Science and Engineering<br>
+          IIT Delhi
+          </p>
+
+          <hr style="margin: 30px 0;">
+
+          <h2 style="text-align: center; margin-bottom: 20px;">
+          Project Supervisors
+          </h2>
+
+          <p style="text-align: center;">
+          Mr. Pankaj Khurana, ISA<br>
+          Mr. Rajiv Ratna Panda, ISA<br>
+          Prof. Snehasish Panigrahy, DESE, IIT Delhi
+          </p>
+
+        </div>
+      </section>
+    </section>
+
+      <section class="panel newsletter">
+        <div class="newsletter-header">
+          <h2 style="text-align: center; margin-bottom: 20px;">Why It Was Required</h2>
+        </div>
+        <div class="report-chip-row">
+          <span class="report-chip">Cross-border electricity data is often fragmented across multiple sources.</span>
+          <span class="report-chip">Decision-makers need infrastructure, market, policy, and news context together.</span>
+          <span class="report-chip">Regional interconnection planning needs a faster way to compare countries and corridors.</span>
+          <span class="report-chip">A shared dashboard improves visibility for collaboration across institutions and regions.</span>
+        </div>
+        <div class="about-text-block" style="text-align: justify;">
+          <p class="about-copy">The project was required to reduce the gap between scattered data sources and practical decision-making needs. Cross-border electricity planning depends on understanding transmission assets, operating status, regional market structures, national and international policies, and the latest developments in the power sector.</p>
+          <p class="about-copy">By combining these layers in a single interface, the dashboard helps users move more quickly from information gathering to analysis, coordination, and action.</p>
+        </div>
+      </section>
+
+      <section class="panel newsletter">
+        <div style="font-family: Arial, sans-serif; line-height: 1.8; color: #222; max-width: 800px; margin: auto;">
+          <h2 style="text-align: center; margin-bottom: 20px;">For any clarification or information, contact:
+          </h2>
+          <table border="0" cellpadding="10" cellspacing="0" style="width: 80%; border-collapse: collapse; margin: auto; text-align: center;">
+          <tr><td style="text-align: center;"><strong>Dawa Jamtsho </strong><a href="mailto:esr252910@iitd.ac.in">esr252906@iitd.ac.in</a></td>
+              <td style="text-align: center;"><strong>Gobinath Satchithanantham </strong><a href="mailto:esr252910@iitd.ac.in">esr252910@iitd.ac.in</a></td>
+            </tr>
+              </table>
+        </div>
+      </section>
+
+      <footer class="site-footer panel">
+        <section class="footer-grid">
+          <div class="footer-block">
+            <p class="footer-title">Project</p>
+            <p>Global Cross-Border Electricity Interconnections Dashboard</p>
+            <p>IIT Delhi - ISA Collaborative Project</p>
+            <p>DESE, IIT Delhi</p>
+            <p>New Delhi</p>
+            <p><a href="mailto:interconnection@gmail.com">interconnection@gmail.com</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Quick Links</p>
+            <p><a href="https://home.iitd.ac.in/" target="_blank" rel="noreferrer">IIT Delhi</a></p>
+            <p><a href="https://isolaralliance.org/" target="_blank" rel="noreferrer">International Solar Alliance</a></p>
+            <p><a href="https://www.iea.org/" target="_blank" rel="noreferrer">International Energy Agency</a></p>
+            <p><a href="https://www.bimstec.org/" target="_blank" rel="noreferrer">BIMSTEC Energy Center</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Site Pages</p>
+            <p><a href="{{ url_for('dashboard_infrastructure') }}">Home</a></p>
+            <p><a href="{{ url_for('about') }}">About</a></p>
+            <p><a href="{{ url_for('dashboard_market') }}">Market</a></p>
+            <p><a href="{{ url_for('policies') }}">Policies</a></p>
+            <p><a href="{{ url_for('analytics') }}">Analytics</a></p>
+            <p><a href="{{ url_for('newsletter') }}">Newsletter</a></p>
+          </div>
+        </section>
+        <p class="footer-copyright">© Global Cross-Border Electricity Interconnections Dashboard 2026</p>
+      </footer>
+    </div>
+  </body>
+</html>

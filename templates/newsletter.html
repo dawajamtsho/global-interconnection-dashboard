@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Newsletter</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='site.js') }}" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hero">
+        <div class="hero-logos">
+          <img class="hero-logo hero-logo--primary" src="{{ url_for('static', filename='logo.png') }}" alt="ISA-IITD Global Electricity Interconnection logo">
+          <div class="hero-logo-stack">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-1.svg') }}" alt="Secondary logo 1">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-2.svg') }}" alt="Secondary logo 2">
+          </div>
+        </div>
+        <div class="hero-copy">
+          <h1>GLOBAL CROSS-BORDER ELECTRICITY INTERCONNECTIONS DASHBOARD</h1>
+          <p class="hero-subtitle">IIT Delhi - ISA Collaborative Project</p>
+        </div>
+      </section>
+
+      <nav class="top-nav">
+        <a href="{{ url_for('dashboard_infrastructure') }}"><span>Home</span></a>
+        <a href="{{ url_for('about') }}"><span>About</span></a>
+        <a href="{{ url_for('dashboard_market') }}"><span>Market</span></a>
+        <a href="{{ url_for('policies') }}"><span>Policies</span></a>
+        <a href="{{ url_for('analytics') }}"><span>Analytics</span></a>
+        <a class="active" href="{{ url_for('newsletter') }}"><span>Newsletter</span></a>
+      </nav>
+
+      <section class="panel newsletter">
+        <div class="newsletter-header">
+          <div>
+            <h2>Generate Newsletter</h2>
+          </div>
+        </div>
+        <form class="filter-form newsletter-generate-form" method="post" action="{{ url_for('newsletter_pdf') }}">
+          <div class="toggle-row">
+            <div class="toggle-meta">
+              <p class="filter-kicker">Generate for</p>
+              <h3 class="filter-title">Scope</h3>
+            </div>
+            <div class="mode-switch" role="tablist" aria-label="PDF location filter mode" data-mode="{{ selected_mode }}">
+              <span class="mode-highlight" aria-hidden="true"></span>
+              <button
+                type="button"
+                class="mode-option{% if selected_mode == 'country' %} active{% endif %}"
+                data-mode="country"
+                aria-pressed="{% if selected_mode == 'country' %}true{% else %}false{% endif %}"
+              >
+                Country
+              </button>
+              <button
+                type="button"
+                class="mode-option{% if selected_mode == 'region' %} active{% endif %}"
+                data-mode="region"
+                aria-pressed="{% if selected_mode == 'region' %}true{% else %}false{% endif %}"
+              >
+                Region
+              </button>
+            </div>
+          </div>
+
+          <input type="hidden" name="filter_mode" id="pdf-filter-mode-hidden" value="{{ selected_mode }}">
+
+          <div id="pdf-country-select-wrap" {% if selected_mode != "country" %}hidden{% endif %}>
+            <label for="pdf-country-select">Country</label>
+            <select id="pdf-country-select" name="location" {% if selected_mode != "country" %}disabled{% endif %}>
+              {% for country in countries %}
+                <option value="{{ country }}" {% if selected_mode == "country" and selected_value == country %}selected{% endif %}>{{ country }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div id="pdf-region-select-wrap" {% if selected_mode != "region" %}hidden{% endif %}>
+            <label for="pdf-region-select">Region</label>
+            <select id="pdf-region-select" name="location" {% if selected_mode != "region" %}disabled{% endif %}>
+              {% for region in regions %}
+                <option value="{{ region }}" {% if selected_mode == "region" and selected_value == region %}selected{% endif %}>{{ region }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label for="newsletter-from-period">From</label>
+            <input type="month" id="newsletter-from-period" name="from_period" value="{{ selected_pdf_from_period }}">
+          </div>
+
+          <div>
+            <label for="newsletter-to-period">To</label>
+            <input type="month" id="newsletter-to-period" name="to_period" value="{{ selected_pdf_to_period }}">
+          </div>
+
+          <div class="filter-actions">
+            <button type="submit">Generate Newsletter</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel newsletter">
+        <div class="newsletter-header">
+          <div>
+            <h2>Related News</h2>
+            {% if newsletter.get('source_mode') %}
+              <p class="policies-count">Data source: {{ newsletter['source_mode'] }}</p>
+            {% endif %}
+          </div>
+          <p class="timestamp">{{ newsletter['generated_at'] }}</p>
+        </div>
+
+        <form class="filter-form" method="get">
+          <div class="toggle-row">
+            <div class="toggle-meta">
+              <p class="filter-kicker">Filter by</p>
+              <h3 class="filter-title">Location Scope</h3>
+            </div>
+            <div class="mode-switch" role="tablist" aria-label="Location filter mode" data-mode="{{ selected_mode }}">
+              <span class="mode-highlight" aria-hidden="true"></span>
+              <button
+                type="button"
+                class="mode-option{% if selected_mode == 'country' %} active{% endif %}"
+                data-mode="country"
+                aria-pressed="{% if selected_mode == 'country' %}true{% else %}false{% endif %}"
+              >
+                Country
+              </button>
+              <button
+                type="button"
+                class="mode-option{% if selected_mode == 'region' %} active{% endif %}"
+                data-mode="region"
+                aria-pressed="{% if selected_mode == 'region' %}true{% else %}false{% endif %}"
+              >
+                Region
+              </button>
+            </div>
+          </div>
+
+          <input type="hidden" name="filter_mode" id="filter-mode-hidden" value="{{ selected_mode }}">
+
+          <div id="country-select-wrap" {% if selected_mode != "country" %}hidden{% endif %}>
+            <label for="country-select">Country</label>
+            <select id="country-select" name="location" {% if selected_mode != "country" %}disabled{% endif %}>
+              {% for country in countries %}
+                <option value="{{ country }}" {% if selected_mode == "country" and selected_value == country %}selected{% endif %}>{{ country }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div id="region-select-wrap" {% if selected_mode != "region" %}hidden{% endif %}>
+            <label for="region-select">Region</label>
+            <select id="region-select" name="location" {% if selected_mode != "region" %}disabled{% endif %}>
+              {% for region in regions %}
+                <option value="{{ region }}" {% if selected_mode == "region" and selected_value == region %}selected{% endif %}>{{ region }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+
+        {% if newsletter['errors'] %}
+          <div class="alert">
+            {% for error in newsletter['errors'] %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if ai_newsletter_notice %}
+          <div class="alert">
+            <p>{{ ai_newsletter_notice }}</p>
+          </div>
+        {% endif %}
+
+        {% if ai_newsletter %}
+          <section class="ai-newsletter-block">
+            <p class="story-meta">Generated with {{ ai_newsletter['model'] }}</p>
+            <h3 class="ai-newsletter-title">{{ ai_newsletter['title'] }}</h3>
+            {% if ai_newsletter['intro'] %}
+              <p class="ai-newsletter-intro">{{ ai_newsletter['intro'] }}</p>
+            {% endif %}
+            {% if ai_newsletter['executive_summary'] %}
+              <div class="ai-newsletter-panel">
+                <h4>Executive Summary</h4>
+                <p>{{ ai_newsletter['executive_summary'] }}</p>
+              </div>
+            {% endif %}
+            {% if ai_newsletter['highlights'] %}
+              <div class="report-chip-row">
+                {% for item in ai_newsletter['highlights'] %}
+                  <span class="report-chip">{{ item }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+            {% if ai_newsletter['sections'] %}
+              <div class="ai-newsletter-sections">
+                {% for section in ai_newsletter['sections'] %}
+                  <article class="ai-newsletter-panel">
+                    <h4>{{ section['title'] }}</h4>
+                    <p>{{ section['body'] }}</p>
+                  </article>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </section>
+        {% endif %}
+
+        <section class="topic-block">
+          <div class="story-list">
+            {% for item in newsletter['items'] %}
+              <article class="story-card">
+                <p class="story-meta">{{ item.source }}{% if item.published_at %} · {{ item.published_at.strftime("%d %b %Y, %H:%M") }}{% endif %}</p>
+                <h4><a href="{{ item.link }}" target="_blank" rel="noreferrer">{{ item.title }}</a></h4>
+                {% if ai_newsletter and ai_newsletter['summary_by_title'].get(item.title) %}
+                  <p class="ai-newsletter-summary">{{ ai_newsletter['summary_by_title'][item.title] }}</p>
+                {% endif %}
+                <div class="story-actions">
+                  <a class="action-button" href="{{ item.link }}" target="_blank" rel="noreferrer">Read more</a>
+                  <button
+                    class="action-button secondary summarize-button"
+                    type="button"
+                    data-title="{{ item.title|e }}"
+                    data-summary="{{ item.summary|e }}"
+                    data-source="{{ item.source|e }}"
+                    data-link="{{ item.link|e }}"
+                  >
+                    Summarize
+                  </button>
+                </div>
+                <p class="summary-output" hidden></p>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      </section>
+
+      <footer class="site-footer panel">
+        <section class="footer-grid">
+          <div class="footer-block">
+            <p class="footer-title">Project</p>
+            <p>Global Cross-Border Electricity Interconnections Dashboard</p>
+            <p>IIT Delhi - ISA Collaborative Project</p>
+            <p>DESE, IIT Delhi</p>
+            <p>New Delhi</p>
+            <p><a href="mailto:interconnection@gmail.com">interconnection@gmail.com</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Quick Links</p>
+            <p><a href="https://home.iitd.ac.in/" target="_blank" rel="noreferrer">IIT Delhi</a></p>
+            <p><a href="https://isolaralliance.org/" target="_blank" rel="noreferrer">International Solar Alliance</a></p>
+            <p><a href="https://www.iea.org/" target="_blank" rel="noreferrer">International Energy Agency</a></p>
+            <p><a href="https://www.bimstec.org/" target="_blank" rel="noreferrer">Bimstec Energy Center</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Site Pages</p>
+            <p><a href="{{ url_for('dashboard_infrastructure') }}">Home</a></p>
+            <p><a href="{{ url_for('about') }}">About</a></p>
+            <p><a href="{{ url_for('dashboard_market') }}">Market</a></p>
+            <p><a href="{{ url_for('policies') }}">Policies</a></p>
+            <p><a href="{{ url_for('analytics') }}">Analytics</a></p>
+            <p><a href="{{ url_for('newsletter') }}">Newsletter</a></p>
+          </div>
+        </section>
+        <p class="footer-copyright">© Global Cross-Border Electricity Interconnections Dashboard 2026</p>
+      </footer>
+    </div>
+    <script>
+      const filterModeHidden = document.querySelector("#filter-mode-hidden");
+      const countryWrap = document.querySelector("#country-select-wrap");
+      const regionWrap = document.querySelector("#region-select-wrap");
+      const countrySelect = document.querySelector("#country-select");
+      const regionSelect = document.querySelector("#region-select");
+      const filterForm = document.querySelector(".filter-form:not(.newsletter-generate-form)");
+      const modeOptions = filterForm.querySelectorAll(".mode-option");
+      const modeSwitch = filterForm.querySelector(".mode-switch");
+
+      const pdfFilterModeHidden = document.querySelector("#pdf-filter-mode-hidden");
+      const pdfCountryWrap = document.querySelector("#pdf-country-select-wrap");
+      const pdfRegionWrap = document.querySelector("#pdf-region-select-wrap");
+      const pdfCountrySelect = document.querySelector("#pdf-country-select");
+      const pdfRegionSelect = document.querySelector("#pdf-region-select");
+      const pdfForm = document.querySelector(".newsletter-generate-form");
+      const pdfModeOptions = pdfForm.querySelectorAll(".mode-option");
+      const pdfModeSwitch = pdfForm.querySelector(".mode-switch");
+
+      function syncFilterMode(mode, hiddenInput, wrapCountry, wrapRegion, selectCountry, selectRegion, switchEl, options) {
+        const isRegion = mode === "region";
+        hiddenInput.value = mode;
+        switchEl.dataset.mode = mode;
+        wrapCountry.hidden = isRegion;
+        wrapRegion.hidden = !isRegion;
+        selectCountry.disabled = isRegion;
+        selectRegion.disabled = !isRegion;
+
+        for (const option of options) {
+          const isActive = option.dataset.mode === mode;
+          option.classList.toggle("active", isActive);
+          option.setAttribute("aria-pressed", isActive ? "true" : "false");
+        }
+      }
+
+      for (const option of modeOptions) {
+        option.addEventListener("click", () => {
+          syncFilterMode(option.dataset.mode, filterModeHidden, countryWrap, regionWrap, countrySelect, regionSelect, modeSwitch, modeOptions);
+          filterForm.requestSubmit();
+        });
+      }
+
+      for (const option of pdfModeOptions) {
+        option.addEventListener("click", () => {
+          syncFilterMode(option.dataset.mode, pdfFilterModeHidden, pdfCountryWrap, pdfRegionWrap, pdfCountrySelect, pdfRegionSelect, pdfModeSwitch, pdfModeOptions);
+        });
+      }
+
+      countrySelect.addEventListener("change", () => filterForm.requestSubmit());
+      regionSelect.addEventListener("change", () => filterForm.requestSubmit());
+      syncFilterMode(filterModeHidden.value, filterModeHidden, countryWrap, regionWrap, countrySelect, regionSelect, modeSwitch, modeOptions);
+      syncFilterMode(pdfFilterModeHidden.value, pdfFilterModeHidden, pdfCountryWrap, pdfRegionWrap, pdfCountrySelect, pdfRegionSelect, pdfModeSwitch, pdfModeOptions);
+
+      const summarizeButtons = document.querySelectorAll(".summarize-button");
+
+      for (const button of summarizeButtons) {
+        button.addEventListener("click", async () => {
+          const card = button.closest(".story-card");
+          const output = card.querySelector(".summary-output");
+
+          button.disabled = true;
+          button.textContent = "Summarizing...";
+
+          try {
+            const response = await fetch("/summarize", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                title: button.dataset.title,
+                summary: button.dataset.summary,
+                source: button.dataset.source,
+                link: button.dataset.link
+              })
+            });
+
+            const data = await response.json();
+            output.hidden = false;
+            output.textContent = data.summary;
+          } catch (error) {
+            output.hidden = false;
+            output.textContent = "Summary could not be generated right now.";
+          } finally {
+            button.disabled = false;
+            button.textContent = "Summarize";
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

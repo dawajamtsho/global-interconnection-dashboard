@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Analytics</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='site.js') }}" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hero">
+        <div class="hero-logos">
+          <img class="hero-logo hero-logo--primary" src="{{ url_for('static', filename='logo.png') }}" alt="ISA-IITD Global Electricity Interconnection logo">
+          <div class="hero-logo-stack">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-1.svg') }}" alt="Secondary logo 1">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-2.svg') }}" alt="Secondary logo 2">
+          </div>
+        </div>
+        <div class="hero-copy">
+          <h1>GLOBAL CROSS-BORDER ELECTRICITY INTERCONNECTIONS DASHBOARD</h1>
+          <p class="hero-subtitle">IIT Delhi - ISA Collaborative Project</p>
+        </div>
+      </section>
+
+      <nav class="top-nav">
+        <a href="{{ url_for('dashboard_infrastructure') }}"><span>Home</span></a>
+        <a href="{{ url_for('about') }}"><span>About</span></a>
+        <a href="{{ url_for('dashboard_market') }}"><span>Market</span></a>
+        <a href="{{ url_for('policies') }}"><span>Policies</span></a>
+        <a class="active" href="{{ url_for('analytics') }}"><span>Analytics</span></a>
+        <a href="{{ url_for('newsletter') }}"><span>Newsletter</span></a>
+      </nav>
+
+      <section class="panel report-hero analytics-hero analytics-hero--robust">
+        <div class="newsletter-header">
+          <div>
+            <p class="filter-kicker">Planning intelligence</p>
+            <h2>Analytics Workbench</h2>
+            <p class="report-subtitle">A data-driven analytical layer for utilization, exchange, congestion, reliability, renewable balancing, economics, temporal behavior, forecasting, GIS, expansion, environment, and automated alerts.</p>
+          </div>
+          <div class="analytics-score">
+            <span>Updated</span>
+            <strong>{{ analytics['generated_at'] }}</strong>
+          </div>
+        </div>
+        <div class="analytics-method-note">
+          <strong>Method note:</strong> corridor capacity, status, voltage, geography, power-pool, and technology metrics are derived from the interconnection dataset. Hourly flow, price, outage, and renewable generation fields are modeled as planning proxies until live feeds are connected.
+        </div>
+      </section>
+
+      <section class="kpi-grid analytics-kpis">
+        <article class="panel kpi-panel">
+          <p class="kpi-label">Corridors</p>
+          <p class="kpi-value">{{ "{:,}".format(analytics['kpis']['corridors']) }}</p>
+          <p class="analytics-note">{{ "{:,}".format(analytics['kpis']['interconnections']) }} individual interconnection assets</p>
+        </article>
+        <article class="panel kpi-panel">
+          <p class="kpi-label">Known Transfer Capacity</p>
+          <p class="kpi-value">{{ "{:,.0f}".format(analytics['kpis']['known_capacity_mw']) }} MW</p>
+          <p class="analytics-note">Aggregated cross-border capacity from known corridor records</p>
+        </article>
+        <article class="panel kpi-panel">
+          <p class="kpi-label">System Utilization Proxy</p>
+          <p class="kpi-value">{{ analytics['kpis']['weighted_utilization_pct'] }}%</p>
+          <p class="analytics-note">Capacity-weighted loading estimate for operational corridors</p>
+        </article>
+        <article class="panel kpi-panel">
+          <p class="kpi-label">Available Transfer Capacity</p>
+          <p class="kpi-value">{{ "{:,.0f}".format(analytics['kpis']['available_transfer_capacity_mw']) }} MW</p>
+          <p class="analytics-note">Estimated ATC after modeled actual flow and NTC margin</p>
+        </article>
+      </section>
+
+      <section class="panel analytics-core">
+        <div class="newsletter-header">
+          <div>
+            <h2>1. Interconnection Utilization Analytics</h2>
+            <p class="policies-count">Core TSO/planner feature: ATC, NTC, actual flow, utilization, corridor heatmap, and congestion indicators</p>
+          </div>
+          <p class="formula">Utilization (%) = Actual Power Flow / Transfer Capacity x 100</p>
+        </div>
+        <div class="analytics-core-grid">
+          <div class="utilization-heatmap utilization-heatmap--data" aria-label="Heavily loaded corridor heatmap">
+            {% for corridor in analytics['utilization_heatmap'] %}
+              <span class="heat {% if corridor['utilization_pct'] >= 80 %}high{% elif corridor['utilization_pct'] >= 55 %}medium{% else %}low{% endif %}">
+                <strong>{{ corridor['label'] }}</strong>
+                <small>{{ corridor['utilization_pct'] }}% · {{ "{:,.0f}".format(corridor['capacity_mw']) }} MW</small>
+              </span>
+            {% endfor %}
+          </div>
+          <div class="analytics-stack">
+            <h3>Regional Comparison</h3>
+            {% for region in analytics['regional_comparison'][:6] %}
+              <div class="analytics-meter">
+                <div>
+                  <strong>{{ region['region'] }}</strong>
+                  <span>{{ region['corridors'] }} corridors · {{ "{:,.0f}".format(region['capacity_mw']) }} MW</span>
+                </div>
+                <meter min="0" max="100" value="{{ region['average_utilization_pct'] }}"></meter>
+                <b>{{ region['average_utilization_pct'] }}%</b>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="table-wrap analytics-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Corridor</th>
+                <th>Transfer Capacity</th>
+                <th>NTC</th>
+                <th>ATC</th>
+                <th>Actual Flow</th>
+                <th>Utilization</th>
+                <th>Indicator</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for corridor in analytics['utilization_heatmap'][:8] %}
+                <tr>
+                  <td>{{ corridor['label'] }}<br><small>{{ corridor['flow_source'] }}</small></td>
+                  <td>{{ "{:,.0f}".format(corridor['capacity_mw']) }} MW</td>
+                  <td>{{ "{:,.0f}".format(corridor['ntc_mw']) }} MW</td>
+                  <td>{{ "{:,.0f}".format(corridor['atc_mw']) }} MW</td>
+                  <td>{{ "{:,.0f}".format(corridor['actual_flow_mw']) }} MW</td>
+                  <td>{{ corridor['utilization_pct'] }}%</td>
+                  <td><span class="severity {{ 'red' if corridor['severity'] in ['Critical', 'Congested'] else 'yellow' if corridor['severity'] == 'Watch' else 'green' }}">{{ corridor['severity'] }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="dashboard-grid report-grid">
+        <section class="panel newsletter analytics-module">
+          <div class="newsletter-header">
+            <div>
+              <h2>2. Cross-Border Energy Exchange Analytics</h2>
+              <p class="policies-count">Monthly import/export balances can plug into this corridor matrix when directional energy-flow data is available</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>From</th><th>To</th><th>Exchange Capacity</th><th>Utilization Signal</th></tr>
+              </thead>
+              <tbody>
+                {% for item in analytics['exchange_matrix'][:8] %}
+                  <tr>
+                    <td>{{ item['from'] }}</td>
+                    <td>{{ item['to'] }}</td>
+                    <td>{{ "{:,.0f}".format(item['capacity_mw']) }} MW</td>
+                    <td>{{ item['utilization_pct'] }}%</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="report-chip-row">
+            <span class="report-chip">Sankey-ready</span>
+            <span class="report-chip">Chord-ready</span>
+            <span class="report-chip">Country-to-country matrix</span>
+            <span class="report-chip">Animated flow map-ready</span>
+          </div>
+        </section>
+
+        <section class="panel newsletter analytics-module">
+          <div class="newsletter-header">
+            <div>
+              <h2>3. Congestion & Bottleneck Analytics</h2>
+              <p class="policies-count">Ranks chronic bottlenecks using utilization, hours above 80%, hours above 95%, and severity index</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>Corridor</th><th>&gt;80%</th><th>&gt;95%</th><th>Severity Index</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {% for corridor in analytics['congested'] %}
+                  <tr>
+                    <td>{{ corridor['label'] }}</td>
+                    <td>{{ corridor['hours_above_80'] }} h</td>
+                    <td>{{ corridor['hours_above_95'] }} h</td>
+                    <td>{{ corridor['congestion_index'] }}</td>
+                    <td><span class="severity {{ 'red' if corridor['severity'] in ['Critical', 'Congested'] else 'yellow' if corridor['severity'] == 'Watch' else 'green' }}">{{ corridor['severity'] }}</span></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="dashboard-grid report-grid">
+        <section class="panel newsletter analytics-module">
+          <div class="newsletter-header">
+            <div>
+              <h2>4. Reliability & Grid Stability Analytics</h2>
+              <p class="policies-count">Import dependency risk, N-1 criticality proxy, redundancy, and supply-security scoring</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>Country</th><th>Connections</th><th>Connected Capacity</th><th>Dependency Risk</th></tr>
+              </thead>
+              <tbody>
+                {% for country in analytics['country_rankings'][:8] %}
+                  <tr>
+                    <td>{{ country['country'] }}</td>
+                    <td>{{ country['connections'] }}</td>
+                    <td>{{ "{:,.0f}".format(country['connected_capacity_mw']) }} MW</td>
+                    <td>{{ country['dependency_risk'] }} / 100</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel newsletter analytics-module">
+          <div class="newsletter-header">
+            <div>
+              <h2>5. Renewable Integration Analytics</h2>
+              <p class="policies-count">Renewable export corridors, balancing support, curtailment reduction potential, and clean-energy exchange tracking</p>
+            </div>
+          </div>
+          <div class="analytics-list">
+            {% for corridor in analytics['renewable_corridors'][:6] %}
+              <article>
+                <strong>{{ corridor['label'] }}</strong>
+                <span>{{ corridor['resource'] }} · {{ "{:,.0f}".format(corridor['capacity_mw']) }} MW · {{ "{:,.0f}".format(corridor['clean_energy_gwh']) }} GWh clean exchange potential</span>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      </section>
+
+      <section class="analytics-module-grid analytics-module-grid--wide">
+        <article class="panel analytics-card">
+          <h3>6. Economic Analytics</h3>
+          <p><strong>${{ "{:,.1f}".format(analytics['economic']['capacity_value_usd_m']) }}M</strong> capacity value proxy</p>
+          <p><strong>${{ "{:,.1f}".format(analytics['economic']['congestion_rent_proxy_usd_m']) }}M</strong> congestion-rent proxy</p>
+          <p><strong>{{ analytics['economic']['market_coupling_readiness_pct'] }}%</strong> market coupling data readiness</p>
+          <span>Price feeds can unlock arbitrage, avoided-cost, and market-efficiency analytics.</span>
+        </article>
+        <article class="panel analytics-card">
+          <h3>7. Temporal Analytics</h3>
+          {% for item in analytics['seasonal_profile'] %}
+            <p><strong>{{ item['period'] }}:</strong> {{ item['loading_pct'] }}% · {{ item['driver'] }}</p>
+          {% endfor %}
+          <span>Hourly, daily, weekly, seasonal, and year-over-year views are ready for time-series feed integration.</span>
+        </article>
+        <article class="panel analytics-card">
+          <h3>8. Forecasting & Predictive Analytics</h3>
+          {% for item in analytics['forecasting'] %}
+            <p><strong>{{ item['year'] }}:</strong> {{ item['expected_loading_pct'] }}% loading · {{ item['expected_congestion_hours'] }} congestion hours</p>
+          {% endfor %}
+          <span>Model path: ARIMA for baseline, Prophet for seasonality, LSTM/ML regression when richer features arrive.</span>
+        </article>
+        <article class="panel analytics-card">
+          <h3>9. GIS & Spatial Analytics</h3>
+          {% for corridor in analytics['spatial']['longest_corridors'][:4] %}
+            <p><strong>{{ corridor['label'] }}:</strong> {{ "{:,.0f}".format(corridor['average_length_km']) }} km average route length</p>
+          {% endfor %}
+          <span>Can overlay population, renewable zones, hydropower plants, substations, geo-risk, and HVDC/HVAC layers.</span>
+        </article>
+        <article class="panel analytics-card">
+          <h3>10. Infrastructure Expansion Planning</h3>
+          <p><strong>{{ "{:,.0f}".format(analytics['kpis']['planned_capacity_mw']) }} MW</strong> planned-capacity signal</p>
+          {% for item in analytics['underutilized'][:3] %}
+            <p><strong>Optimization candidate:</strong> {{ item['label'] }} at {{ item['utilization_pct'] }}%</p>
+          {% endfor %}
+          <span>Outputs can become investment priority rankings, expansion scenarios, and regional integration roadmap.</span>
+        </article>
+        <article class="panel analytics-card">
+          <h3>11. Environmental Analytics</h3>
+          <p><strong>{{ "{:,.2f}".format(analytics['environmental']['co2_avoided_mt']) }} MtCO2</strong> avoided-emissions potential</p>
+          <p><strong>{{ "{:,.0f}".format(analytics['environmental']['clean_energy_gwh']) }} GWh</strong> clean energy exchanged</p>
+          <p><strong>{{ analytics['environmental']['grid_emission_factor'] }}</strong> tCO2/MWh grid-emission factor</p>
+          <span>CO2 avoided = imported clean energy x grid emission factor.</span>
+        </article>
+      </section>
+
+      <section class="panel analytics-intelligence">
+        <div class="newsletter-header">
+          <div>
+            <h2>12. Dashboard Intelligence Features</h2>
+            <p class="policies-count">Automated insights and alert engine from corridor rankings, utilization shifts, and transfer-margin thresholds</p>
+          </div>
+        </div>
+        <div class="intelligence-grid">
+          <article>
+            <h3>Automated Insights</h3>
+            {% for corridor in analytics['congested'][:3] %}
+              <p>{{ corridor['label'] }} is flagged as {{ corridor['severity']|lower }} with {{ corridor['utilization_pct'] }}% modeled utilization.</p>
+            {% endfor %}
+            {% for item in analytics['underutilized'][:2] %}
+              <p>{{ item['label'] }} appears underutilized at {{ item['utilization_pct'] }}%, making it a candidate for trade or scheduling review.</p>
+            {% endfor %}
+          </article>
+          <article>
+            <h3>Alert Engine</h3>
+            <p>Congestion alerts when utilization rises above 80% or 95%.</p>
+            <p>Low transfer-margin alerts when ATC approaches zero.</p>
+            <p>Sudden flow-reversal alerts when live directional data changes sign.</p>
+            <p>Abnormal deviation alerts when measured flow diverges from forecast.</p>
+          </article>
+        </div>
+      </section>
+
+      <footer class="site-footer panel">
+        <section class="footer-grid">
+          <div class="footer-block">
+            <p class="footer-title">Project</p>
+            <p>Global Cross-Border Electricity Interconnections Dashboard</p>
+            <p>IIT Delhi - ISA Collaborative Project</p>
+            <p>DESE, IIT Delhi</p>
+            <p>New Delhi</p>
+            <p><a href="mailto:interconnection@gmail.com">interconnection@gmail.com</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Quick Links</p>
+            <p><a href="https://home.iitd.ac.in/" target="_blank" rel="noreferrer">IIT Delhi</a></p>
+            <p><a href="https://isolaralliance.org/" target="_blank" rel="noreferrer">International Solar Alliance</a></p>
+            <p><a href="https://www.iea.org/" target="_blank" rel="noreferrer">International Energy Agency</a></p>
+            <p><a href="https://www.bimstec.org/" target="_blank" rel="noreferrer">Bimstec Energy Center</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Site Pages</p>
+            <p><a href="{{ url_for('dashboard_infrastructure') }}">Home</a></p>
+            <p><a href="{{ url_for('about') }}">About</a></p>
+            <p><a href="{{ url_for('dashboard_market') }}">Market</a></p>
+            <p><a href="{{ url_for('policies') }}">Policies</a></p>
+            <p><a href="{{ url_for('analytics') }}">Analytics</a></p>
+            <p><a href="{{ url_for('newsletter') }}">Newsletter</a></p>
+          </div>
+        </section>
+        <p class="footer-copyright">© Global Cross-Border Electricity Interconnections Dashboard 2026</p>
+      </footer>
+    </div>
+  </body>
+</html>

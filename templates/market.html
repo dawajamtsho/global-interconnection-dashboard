@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Market</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='site.js') }}" defer></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hero hero--compact">
+        <div class="hero-logos">
+          <img class="hero-logo hero-logo--primary" src="{{ url_for('static', filename='logo.png') }}" alt="ISA-IITD Global Electricity Interconnection logo">
+          <div class="hero-logo-stack">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-1.svg') }}" alt="Secondary logo 1">
+            <img class="hero-logo hero-logo--secondary" src="{{ url_for('static', filename='logo-small-2.svg') }}" alt="Secondary logo 2">
+          </div>
+        </div>
+        <div class="hero-copy">
+          <h1>GLOBAL CROSS-BORDER ELECTRICITY INTERCONNECTIONS DASHBOARD</h1>
+          <p class="hero-subtitle">IIT Delhi - ISA Collaborative Project</p>
+        </div>
+      </section>
+
+      <nav class="top-nav">
+        <a href="{{ url_for('dashboard_infrastructure') }}"><span>Home</span></a>
+        <a href="{{ url_for('about') }}"><span>About</span></a>
+        <a class="active" href="{{ url_for('dashboard_market') }}"><span>Market</span></a>
+        <a href="{{ url_for('policies') }}"><span>Policies</span></a>
+        <a href="{{ url_for('analytics') }}"><span>Analytics</span></a>
+        <a href="{{ url_for('newsletter') }}"><span>Newsletter</span></a>
+      </nav>
+
+      <section class="panel filter-panel">
+        <form class="filter-form filter-form--dashboard" method="get">
+          <div>
+            <label for="market-country">Country</label>
+            <select id="market-country" name="country">
+              <option value="">All countries</option>
+              {% for country in filters['countries'] %}
+                <option value="{{ country['code'] }}" {% if selected_country == country['code'] %}selected{% endif %}>{{ country['name'] }} ({{ country['code'] }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="market-pool">Power Pool</label>
+            <select id="market-pool" name="power_pool">
+              <option value="">All pools</option>
+              {% for pool in filters['power_pools'] %}
+                <option value="{{ pool }}" {% if selected_power_pool == pool %}selected{% endif %}>{{ pool }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="filter-actions">
+            <button type="submit">Apply filters</button>
+          </div>
+          <div class="filter-actions">
+            <a class="action-button secondary" href="{{ url_for('dashboard_market') }}">Reset</a>
+          </div>
+        </form>
+      </section>
+
+      <section class="kpi-grid">
+        <article class="panel kpi-panel"><p class="kpi-label">Top Corridors Listed</p><p class="kpi-value">{{ market['kpis']['corridors'] }}</p></article>
+        <article class="panel kpi-panel"><p class="kpi-label">Assets With Capacity</p><p class="kpi-value">{{ market['kpis']['known_capacity_assets'] }}</p></article>
+        <article class="panel kpi-panel"><p class="kpi-label">Average Capacity</p><p class="kpi-value">{{ "{:,.0f}".format(market['kpis']['average_capacity_mw']) }} MW</p></article>
+        <article class="panel kpi-panel"><p class="kpi-label">Planned Assets</p><p class="kpi-value">{{ market['kpis']['planned_assets'] }}</p></article>
+      </section>
+
+      <section class="panel newsletter">
+        <div class="newsletter-header">
+          <div>
+            <h2 style="text-align: center;">Live Market Snapshot</h2>
+            <p class="policies-count">Powered by configured API credentials for the strongest supported geographies in the current selection</p>
+          </div>
+        </div>
+        <div class="live-market-grid">
+          {% for card in live_market['cards'] %}
+            <article class="live-market-card">
+              <div class="live-market-topline">
+                <span class="live-market-type{% if card['status'] == 'ok' %} is-live{% elif card['status'] == 'annual' %} is-annual{% elif card['status'] == 'reference' %} is-reference{% else %} is-unavailable{% endif %}">
+                  {% if card['status'] == 'ok' %}
+                    Live Market
+                  {% elif card['status'] == 'annual' %}
+                    Annual Dataset
+                  {% elif card['status'] == 'reference' %}
+                    Regional Source
+                  {% else %}
+                    Unavailable
+                  {% endif %}
+                </span>
+                <p class="story-meta">{{ card['source'] }}</p>
+              </div>
+              <h3>{{ card['name'] }}</h3>
+              {% if card['status'] == 'ok' %}
+                <p class="live-market-value">{{ "{:,.0f}".format(card['latest_value']) }} {{ card['latest_unit'] }}</p>
+                <p>{{ card['region'] }} · {{ card['metric'] }}</p>
+                <p>Latest point: {{ card['latest_period'] }}</p>
+                {% if card['average_value'] is not none %}
+                  <p>Window average: {{ "{:,.0f}".format(card['average_value']) }} {{ card['latest_unit'] }}</p>
+                {% endif %}
+              {% elif card['status'] == 'annual' %}
+                {% if card['latest_value'] is not none %}
+                  <p class="live-market-value">{{ "{:,.0f}".format(card['latest_value']) }} {{ card['latest_unit'] }}</p>
+                {% endif %}
+                <p>{{ card['region'] }} · {{ card['metric'] }}</p>
+                <p>{{ card['detail'] }}</p>
+              {% elif card['status'] == 'reference' %}
+                <p class="live-market-value live-market-value--reference">Reference</p>
+                <p>{{ card['region'] }} · {{ card['metric'] }}</p>
+                <p>{{ card['detail'] }}</p>
+              {% else %}
+                <p>{{ card['error'] }}</p>
+              {% endif %}
+              <a class="action-button secondary" href="{{ card['link'] }}" target="_blank" rel="noreferrer">Open provider site</a>
+            </article>
+          {% endfor %}
+
+          {% if market['kpis'].get('known_capacity_mw') is not none %}
+            <article class="live-market-card">
+              <div class="live-market-topline">
+                <span class="live-market-type is-reference">Reference</span>
+                <p class="story-meta">Dataset Total</p>
+              </div>
+              <h3>Total Known Capacity</h3>
+              <p class="live-market-value">{{ "{:,.0f}".format(market['kpis']['known_capacity_mw']) }} MW</p>
+              <p>All corridors with a known capacity value</p>
+              <p>{{ market['kpis']['known_capacity_assets'] }} assets included</p>
+              <a class="action-button secondary" href="{{ url_for('dashboard_market') }}">Refresh view</a>
+            </article>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="dashboard-grid">
+        <section class="panel newsletter">
+          <div class="newsletter-header"><div><h2>Voltage Breakdown</h2></div></div>
+          <div id="market-voltage-chart" class="chart-surface"></div>
+        </section>
+        <section class="panel newsletter">
+          <div class="newsletter-header"><div><h2>Mode Breakdown</h2></div></div>
+          <div id="market-mode-chart" class="chart-surface"></div>
+        </section>
+      </section>
+
+      <section class="dashboard-grid">
+        <section class="panel newsletter">
+          <div class="newsletter-header"><div><h2>Top Countries</h2></div></div>
+          <div id="market-country-chart" class="chart-surface"></div>
+        </section>
+        <section class="panel newsletter">
+          <div class="newsletter-header"><div><h2>Status Summary</h2></div></div>
+          <div id="market-status-chart" class="chart-surface"></div>
+        </section>
+      </section>
+
+      <section class="dashboard-grid">
+        <section class="panel newsletter">
+          <div class="newsletter-header"><div><h2>Power Pool Breakdown</h2></div></div>
+          <div id="market-pool-chart" class="chart-surface"></div>
+        </section>
+        <section class="panel newsletter">
+          <div class="newsletter-header"><div><h2>Top Corridor Capacity</h2></div></div>
+          <div id="market-corridor-chart" class="chart-surface"></div>
+        </section>
+      </section>
+
+      <section class="panel newsletter">
+        <div class="newsletter-header">
+          <div>
+            <h2>Largest Corridors</h2>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Corridor</th>
+                <th>Connections</th>
+                <th>Known Capacity</th>
+                <th>Operational</th>
+                <th>Planned</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in market['corridors'] %}
+                <tr>
+                  <td>{{ item['label'] }}</td>
+                  <td>{{ item['connections'] }}</td>
+                  <td>{{ item['capacity_mw'] }} MW</td>
+                  <td>{{ item['operational'] }}</td>
+                  <td>{{ item['planned'] }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="site-footer panel">
+        <section class="footer-grid">
+          <div class="footer-block">
+            <p class="footer-title">Project</p>
+            <p>Global Cross-Border Electricity Interconnections Dashboard</p>
+            <p>IIT Delhi - ISA Collaborative Project</p>
+            <p>DESE, IIT Delhi</p>
+            <p>New Delhi</p>
+            <p><a href="mailto:interconnection@gmail.com">interconnection@gmail.com</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Quick Links</p>
+            <p><a href="https://home.iitd.ac.in/" target="_blank" rel="noreferrer">IIT Delhi</a></p>
+            <p><a href="https://isolaralliance.org/" target="_blank" rel="noreferrer">International Solar Alliance</a></p>
+            <p><a href="https://www.iea.org/" target="_blank" rel="noreferrer">International Energy Agency</a></p>
+            <p><a href="https://www.bimstec.org/" target="_blank" rel="noreferrer">Bimstec Energy Center</a></p>
+          </div>
+          <div class="footer-block">
+            <p class="footer-title">Site Pages</p>
+            <p><a href="{{ url_for('dashboard_infrastructure') }}">Home</a></p>
+            <p><a href="{{ url_for('about') }}">About</a></p>
+            <p><a href="{{ url_for('dashboard_market') }}">Market</a></p>
+            <p><a href="{{ url_for('policies') }}">Policies</a></p>
+            <p><a href="{{ url_for('analytics') }}">Analytics</a></p>
+            <p><a href="{{ url_for('newsletter') }}">Newsletter</a></p>
+          </div>
+        </section>
+        <p class="footer-copyright">© Global Cross-Border Electricity Interconnections Dashboard 2026</p>
+      </footer>
+    </div>
+
+    <script>
+      const voltageBreakdown = {{ market['voltage_breakdown']|tojson }};
+      const modeBreakdown = {{ market['mode_breakdown']|tojson }};
+      const countryCounts = {{ market['country_counts']|tojson }};
+      const statusBreakdown = {{ market['status_breakdown']|tojson }};
+      const powerPoolBreakdown = {{ market['power_pool_breakdown']|tojson }};
+      const corridorSummary = {{ market['corridors']|tojson }};
+
+      Plotly.newPlot("market-voltage-chart", [{
+        type: "pie",
+        labels: voltageBreakdown.map(item => item.label),
+        values: voltageBreakdown.map(item => item.count),
+        hole: 0.45,
+        marker: { colors: ["#0f766e", "#164e63", "#f59e0b", "#94a3b8", "#22c55e", "#ef4444"] }
+      }], {
+        margin: { l: 10, r: 10, t: 10, b: 10 },
+        paper_bgcolor: "rgba(0,0,0,0)"
+      }, { responsive: true, displayModeBar: false });
+
+      Plotly.newPlot("market-mode-chart", [{
+        type: "bar",
+        x: modeBreakdown.map(item => item.label),
+        y: modeBreakdown.map(item => item.count),
+        marker: { color: "#164e63" }
+      }], {
+        margin: { l: 40, r: 10, t: 10, b: 60 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)"
+      }, { responsive: true, displayModeBar: false });
+
+      Plotly.newPlot("market-country-chart", [{
+        type: "bar",
+        x: countryCounts.map(item => item.country),
+        y: countryCounts.map(item => item.count),
+        marker: { color: "#0f766e" }
+      }], {
+        margin: { l: 40, r: 10, t: 10, b: 100 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        xaxis: { tickangle: -35 }
+      }, { responsive: true, displayModeBar: false });
+
+      Plotly.newPlot("market-status-chart", [{
+        type: "pie",
+        labels: statusBreakdown.map(item => item.label),
+        values: statusBreakdown.map(item => item.count),
+        hole: 0.45,
+        marker: { colors: ["#dc2626", "#f59e0b", "#2563eb", "#6b7280", "#0f766e"] }
+      }], {
+        margin: { l: 10, r: 10, t: 10, b: 10 },
+        paper_bgcolor: "rgba(0,0,0,0)"
+      }, { responsive: true, displayModeBar: false });
+
+      Plotly.newPlot("market-pool-chart", [{
+        type: "bar",
+        x: powerPoolBreakdown.map(item => item.label),
+        y: powerPoolBreakdown.map(item => item.count),
+        marker: { color: "#2563eb" }
+      }], {
+        margin: { l: 40, r: 10, t: 10, b: 100 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        xaxis: { tickangle: -35 }
+      }, { responsive: true, displayModeBar: false });
+
+      Plotly.newPlot("market-corridor-chart", [{
+        type: "bar",
+        x: corridorSummary.map(item => item.label),
+        y: corridorSummary.map(item => item.capacity_mw),
+        marker: { color: "#f59e0b" }
+      }], {
+        margin: { l: 40, r: 10, t: 10, b: 100 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        xaxis: { tickangle: -35 },
+        yaxis: { title: "Capacity (MW)" }
+      }, { responsive: true, displayModeBar: false });
+    </script>
+  </body>
+</html>
