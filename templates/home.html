@@ -56,19 +56,6 @@
           </a>
         </div>
         <div id="infra-map" class="chart-surface chart-map"></div>
-        <div class="live-flow-strip">
-          <div>
-            <p class="filter-kicker">ENTSO-E corridor data</p>
-            <p>
-              {% if dashboard['live_flow_total'] %}
-                {{ dashboard['live_flow_count'] }} of {{ dashboard['live_flow_total'] }} supported European corridors have recent cross-border flow data in this view.
-              {% else %}
-                No ENTSO-E-supported country pairs are visible in this view, or ENTSOE_TOKEN is not configured.
-              {% endif %}
-            </p>
-          </div>
-          <a class="action-button secondary" href="https://transparency.entsoe.eu/" target="_blank" rel="noreferrer">Open ENTSO-E</a>
-        </div>
         <div class="map-legend">
           <div class="legend-item">
             <span class="legend-icon legend-line legend-operational"></span>
